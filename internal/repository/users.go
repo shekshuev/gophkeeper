@@ -64,3 +64,24 @@ func (r *UserRepositoryImpl) GetUserByUserName(ctx context.Context, userName str
 	}
 	return &user, nil
 }
+
+// GetUserByID получает пользователя по его уникальному идентификатору, если он не помечен как удалённый.
+// Возвращает ReadUserDTO или ErrNotFound, если пользователь не найден.
+func (r *UserRepositoryImpl) GetUserByID(ctx context.Context, id uint64) (*models.ReadUserDTO, error) {
+	query := `
+		select 
+			id, user_name, first_name, last_name, created_at, updated_at 
+		from users 
+		where id = $1 and deleted_at is null;
+	`
+	var user models.ReadUserDTO
+	err := r.db.QueryRowContext(ctx, query, id).
+		Scan(&user.ID, &user.UserName, &user.FirstName, &user.LastName, &user.CreatedAt, &user.UpdatedAt)
+	if err == sql.ErrNoRows {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}

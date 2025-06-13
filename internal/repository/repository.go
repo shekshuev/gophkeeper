@@ -20,6 +20,10 @@ type UserRepository interface {
 	// Возвращает ReadAuthUserDataDTO или ошибку, если пользователь не найден.
 	GetUserByUserName(ctx context.Context, userName string) (*models.ReadAuthUserDataDTO, error)
 
+	// GetUserByUserName находит пользователя по его уникальному идентификатору.
+	// Возвращает ReadUserDTO или ошибку, если пользователь не найден.
+	GetUserByID(ctx context.Context, id uint64) (*models.ReadUserDTO, error)
+
 	// CreateUser создает нового пользователя на основе CreateUserDTO.
 	// Возвращает ReadAuthUserDataDTO или ошибку, если пользователь уже существует или произошла ошибка при сохранении.
 	CreateUser(ctx context.Context, user models.CreateUserDTO) (*models.ReadAuthUserDataDTO, error)
