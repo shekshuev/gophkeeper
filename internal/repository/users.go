@@ -19,7 +19,7 @@ type UserRepositoryImpl struct {
 
 // NewUserRepositoryImpl создаёт новый экземпляр UserRepositoryImpl.
 // Устанавливает соединение с базой данных на основе переданного DSN из конфигурации.
-func NewUserRepositoryImpl(ctx context.Context, cfg *config.Config) *UserRepositoryImpl {
+func NewUserRepositoryImpl(cfg *config.Config) *UserRepositoryImpl {
 	db, err := sql.Open("pgx", cfg.DatabaseDSN)
 	if err != nil {
 		log.Fatal("Error connecting to database", err)

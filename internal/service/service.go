@@ -9,11 +9,6 @@ import (
 
 // UserService определяет операции для управления пользователями и получения информации о них.
 type UserService interface {
-	// GetAllUsers возвращает список пользователей с пагинацией.
-	// limit — максимальное количество пользователей,
-	// offset — смещение от начала списка.
-	GetAllUsers(ctx context.Context, limit, offset uint64) ([]models.ReadUserDTO, error)
-
 	// GetUserByID возвращает пользователя по его уникальному идентификатору.
 	GetUserByID(ctx context.Context, id uint64) (*models.ReadUserDTO, error)
 }
