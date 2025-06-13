@@ -35,21 +35,6 @@ func (m *MockUserService) EXPECT() *MockUserServiceMockRecorder {
 	return m.recorder
 }
 
-// GetAllUsers mocks base method.
-func (m *MockUserService) GetAllUsers(ctx context.Context, limit, offset uint64) ([]models.ReadUserDTO, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllUsers", ctx, limit, offset)
-	ret0, _ := ret[0].([]models.ReadUserDTO)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAllUsers indicates an expected call of GetAllUsers.
-func (mr *MockUserServiceMockRecorder) GetAllUsers(ctx, limit, offset interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllUsers", reflect.TypeOf((*MockUserService)(nil).GetAllUsers), ctx, limit, offset)
-}
-
 // GetUserByID mocks base method.
 func (m *MockUserService) GetUserByID(ctx context.Context, id uint64) (*models.ReadUserDTO, error) {
 	m.ctrl.T.Helper()
@@ -116,4 +101,86 @@ func (m *MockAuthService) Register(ctx context.Context, dto models.RegisterUserD
 func (mr *MockAuthServiceMockRecorder) Register(ctx, dto interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockAuthService)(nil).Register), ctx, dto)
+}
+
+// MockSecretService is a mock of SecretService interface.
+type MockSecretService struct {
+	ctrl     *gomock.Controller
+	recorder *MockSecretServiceMockRecorder
+}
+
+// MockSecretServiceMockRecorder is the mock recorder for MockSecretService.
+type MockSecretServiceMockRecorder struct {
+	mock *MockSecretService
+}
+
+// NewMockSecretService creates a new mock instance.
+func NewMockSecretService(ctrl *gomock.Controller) *MockSecretService {
+	mock := &MockSecretService{ctrl: ctrl}
+	mock.recorder = &MockSecretServiceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSecretService) EXPECT() *MockSecretServiceMockRecorder {
+	return m.recorder
+}
+
+// Create mocks base method.
+func (m *MockSecretService) Create(ctx context.Context, dto models.CreateSecretDTO) (uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Create", ctx, dto)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Create indicates an expected call of Create.
+func (mr *MockSecretServiceMockRecorder) Create(ctx, dto interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockSecretService)(nil).Create), ctx, dto)
+}
+
+// DeleteByID mocks base method.
+func (m *MockSecretService) DeleteByID(ctx context.Context, id uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteByID", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteByID indicates an expected call of DeleteByID.
+func (mr *MockSecretServiceMockRecorder) DeleteByID(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByID", reflect.TypeOf((*MockSecretService)(nil).DeleteByID), ctx, id)
+}
+
+// GetAllByUser mocks base method.
+func (m *MockSecretService) GetAllByUser(ctx context.Context, userID uint64) ([]models.ReadSecretDTO, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllByUser", ctx, userID)
+	ret0, _ := ret[0].([]models.ReadSecretDTO)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllByUser indicates an expected call of GetAllByUser.
+func (mr *MockSecretServiceMockRecorder) GetAllByUser(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllByUser", reflect.TypeOf((*MockSecretService)(nil).GetAllByUser), ctx, userID)
+}
+
+// GetByID mocks base method.
+func (m *MockSecretService) GetByID(ctx context.Context, id uint64) (*models.ReadSecretDTO, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByID", ctx, id)
+	ret0, _ := ret[0].(*models.ReadSecretDTO)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByID indicates an expected call of GetByID.
+func (mr *MockSecretServiceMockRecorder) GetByID(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockSecretService)(nil).GetByID), ctx, id)
 }

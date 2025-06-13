@@ -25,6 +25,7 @@ import (
 //   - /v1.0/users/{id}    — GET: получение пользователя по ID (требует JWT)
 type Handler struct {
 	users    service.UserService
+	secrets  service.SecretService
 	auth     service.AuthService
 	Router   *chi.Mux
 	validate *validator.Validate
@@ -43,10 +44,11 @@ var ErrInvalidToken = errors.New("invalid token")
 // Использует:
 //   - стандартные middleware chi (RequestID, Logger, Recoverer и др.)
 //   - CORS (разрешает все источники)
-//   - JWT-аутентификацию для защищённых маршрутов /v1.0/users/{id}
+//   - JWT-аутентификацию для защищённых маршрутов
 func NewHandler(
 	users service.UserService,
 	auth service.AuthService,
+	secrets service.SecretService,
 	cfg *config.Config,
 ) *Handler {
 	router := chi.NewRouter()
@@ -57,7 +59,7 @@ func NewHandler(
 	router.Use(chiMiddleware.SetHeader("Content-Type", "application/json"))
 	router.Use(chiMiddleware.Recoverer)
 	router.Use(cors.AllowAll().Handler)
-	h := &Handler{users: users, auth: auth, Router: router, validate: validate, cfg: cfg}
+	h := &Handler{users: users, auth: auth, secrets: secrets, Router: router, validate: validate, cfg: cfg}
 
 	h.Router.Route("/v1.0/users", func(r chi.Router) {
 		r.Use(middleware.RequestAuth(cfg.AccessTokenSecret))
@@ -65,6 +67,15 @@ func NewHandler(
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", h.GetUserByID)
 		})
+	})
+
+	h.Router.Route("/v1.0/secrets", func(r chi.Router) {
+		r.Use(middleware.RequestAuthSameID(cfg.AccessTokenSecret))
+
+		r.Get("/{id}", h.GetSecretByID)
+		r.Delete("/{id}", h.DeleteSecretByID)
+		r.Get("/user/{user_id}", h.GetAllSecretsByUserID)
+		r.Post("/", h.CreateSecret)
 	})
 
 	h.Router.Route("/v1.0/auth", func(r chi.Router) {

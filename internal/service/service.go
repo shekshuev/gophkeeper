@@ -24,6 +24,14 @@ type AuthService interface {
 	Register(ctx context.Context, dto models.RegisterUserDTO) (*models.ReadTokenDTO, error)
 }
 
+// SecretService определяет поведение сервиса по работе с секретами.
+type SecretService interface {
+	Create(ctx context.Context, dto models.CreateSecretDTO) (uint64, error)
+	GetByID(ctx context.Context, id uint64) (*models.ReadSecretDTO, error)
+	GetAllByUser(ctx context.Context, userID uint64) ([]models.ReadSecretDTO, error)
+	DeleteByID(ctx context.Context, id uint64) error
+}
+
 // ErrUserNotFound возвращается, если пользователь не найден в базе.
 var ErrUserNotFound = fmt.Errorf("user not found")
 

@@ -45,9 +45,11 @@ func main() {
 	printBuildInfo()
 	cfg := config.GetConfig()
 	userRepo := repository.NewUserRepositoryImpl(&cfg)
+	secretRepo := repository.NewSecretRepositoryImpl(&cfg)
 	userService := service.NewUserServiceImpl(userRepo, &cfg)
 	authService := service.NewAuthServiceImpl(userRepo, &cfg)
-	userHandler := handler.NewHandler(userService, authService, &cfg)
+	secretService := service.NewSecretServiceImpl(secretRepo)
+	userHandler := handler.NewHandler(userService, authService, secretService, &cfg)
 	server := &http.Server{
 		Addr:    cfg.ServerAddress,
 		Handler: userHandler.Router,

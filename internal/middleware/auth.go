@@ -44,7 +44,7 @@ func RequestAuthSameID(secret string) func(http.Handler) http.Handler {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
-			strId := chi.URLParam(r, "id")
+			strId := chi.URLParam(r, "user_id")
 			_, err = strconv.Atoi(strId)
 			if err != nil {
 				h.ServeHTTP(w, r)

@@ -29,7 +29,7 @@ func TestHandler_GetUserByID(t *testing.T) {
 		cfg.AccessTokenExpires,
 	)
 	assert.NoError(t, err, "error creating token")
-	handler := NewHandler(users, nil, &cfg)
+	handler := NewHandler(users, nil, nil, &cfg)
 	httpSrv := httptest.NewServer(handler.Router)
 	defer httpSrv.Close()
 

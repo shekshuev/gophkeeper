@@ -12,43 +12,6 @@ import (
 	models "github.com/shekshuev/gophkeeper/internal/models"
 )
 
-// MockDatabaseChecker is a mock of DatabaseChecker interface.
-type MockDatabaseChecker struct {
-	ctrl     *gomock.Controller
-	recorder *MockDatabaseCheckerMockRecorder
-}
-
-// MockDatabaseCheckerMockRecorder is the mock recorder for MockDatabaseChecker.
-type MockDatabaseCheckerMockRecorder struct {
-	mock *MockDatabaseChecker
-}
-
-// NewMockDatabaseChecker creates a new mock instance.
-func NewMockDatabaseChecker(ctrl *gomock.Controller) *MockDatabaseChecker {
-	mock := &MockDatabaseChecker{ctrl: ctrl}
-	mock.recorder = &MockDatabaseCheckerMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockDatabaseChecker) EXPECT() *MockDatabaseCheckerMockRecorder {
-	return m.recorder
-}
-
-// CheckDBConnection mocks base method.
-func (m *MockDatabaseChecker) CheckDBConnection() error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckDBConnection")
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CheckDBConnection indicates an expected call of CheckDBConnection.
-func (mr *MockDatabaseCheckerMockRecorder) CheckDBConnection() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckDBConnection", reflect.TypeOf((*MockDatabaseChecker)(nil).CheckDBConnection))
-}
-
 // MockUserRepository is a mock of UserRepository interface.
 type MockUserRepository struct {
 	ctrl     *gomock.Controller
@@ -115,4 +78,86 @@ func (m *MockUserRepository) GetUserByUserName(ctx context.Context, userName str
 func (mr *MockUserRepositoryMockRecorder) GetUserByUserName(ctx, userName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByUserName", reflect.TypeOf((*MockUserRepository)(nil).GetUserByUserName), ctx, userName)
+}
+
+// MockSecretRepository is a mock of SecretRepository interface.
+type MockSecretRepository struct {
+	ctrl     *gomock.Controller
+	recorder *MockSecretRepositoryMockRecorder
+}
+
+// MockSecretRepositoryMockRecorder is the mock recorder for MockSecretRepository.
+type MockSecretRepositoryMockRecorder struct {
+	mock *MockSecretRepository
+}
+
+// NewMockSecretRepository creates a new mock instance.
+func NewMockSecretRepository(ctrl *gomock.Controller) *MockSecretRepository {
+	mock := &MockSecretRepository{ctrl: ctrl}
+	mock.recorder = &MockSecretRepositoryMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSecretRepository) EXPECT() *MockSecretRepositoryMockRecorder {
+	return m.recorder
+}
+
+// Create mocks base method.
+func (m *MockSecretRepository) Create(ctx context.Context, dto models.CreateSecretDTO) (uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Create", ctx, dto)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Create indicates an expected call of Create.
+func (mr *MockSecretRepositoryMockRecorder) Create(ctx, dto interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockSecretRepository)(nil).Create), ctx, dto)
+}
+
+// DeleteByID mocks base method.
+func (m *MockSecretRepository) DeleteByID(ctx context.Context, id uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteByID", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteByID indicates an expected call of DeleteByID.
+func (mr *MockSecretRepositoryMockRecorder) DeleteByID(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByID", reflect.TypeOf((*MockSecretRepository)(nil).DeleteByID), ctx, id)
+}
+
+// GetAllByUser mocks base method.
+func (m *MockSecretRepository) GetAllByUser(ctx context.Context, userID uint64) ([]models.ReadSecretDTO, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllByUser", ctx, userID)
+	ret0, _ := ret[0].([]models.ReadSecretDTO)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllByUser indicates an expected call of GetAllByUser.
+func (mr *MockSecretRepositoryMockRecorder) GetAllByUser(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllByUser", reflect.TypeOf((*MockSecretRepository)(nil).GetAllByUser), ctx, userID)
+}
+
+// GetByID mocks base method.
+func (m *MockSecretRepository) GetByID(ctx context.Context, id uint64) (*models.ReadSecretDTO, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByID", ctx, id)
+	ret0, _ := ret[0].(*models.ReadSecretDTO)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByID indicates an expected call of GetByID.
+func (mr *MockSecretRepositoryMockRecorder) GetByID(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockSecretRepository)(nil).GetByID), ctx, id)
 }
