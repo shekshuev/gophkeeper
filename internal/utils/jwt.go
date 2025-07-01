@@ -59,7 +59,7 @@ func GetRawRefreshToken(req *http.Request) (string, error) {
 // Возвращает подписанную строку токена.
 func CreateToken(secret, userId string, exp time.Duration) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Issuer:    "GopherTalk",
+		Issuer:    "Gophkeeper",
 		Subject:   userId,
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(exp)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),

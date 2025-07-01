@@ -39,6 +39,7 @@ type ErrorResponse struct {
 var ErrValidationError = errors.New("validation error")
 var ErrInvalidID = errors.New("invalid ID")
 var ErrInvalidToken = errors.New("invalid token")
+var ErrNotFound = errors.New("not found")
 
 // NewHandler создаёт и настраивает HTTP-обработчик со всеми маршрутами и middleware.
 // Использует:
@@ -70,12 +71,10 @@ func NewHandler(
 	})
 
 	h.Router.Route("/v1.0/secrets", func(r chi.Router) {
-		r.Use(middleware.RequestAuthSameID(cfg.AccessTokenSecret))
-
-		r.Get("/{id}", h.GetSecretByID)
-		r.Delete("/{id}", h.DeleteSecretByID)
-		r.Get("/user/{user_id}", h.GetAllSecretsByUserID)
-		r.Post("/", h.CreateSecret)
+		r.With(middleware.RequestAuth(cfg.AccessTokenSecret)).Post("/", h.CreateSecret)
+		r.With(middleware.RequestAuth(cfg.AccessTokenSecret)).Get("/{id:[0-9]+}", h.GetSecretByID)
+		r.With(middleware.RequestAuth(cfg.AccessTokenSecret)).Delete("/{id:[0-9]+}", h.DeleteSecretByID)
+		r.With(middleware.RequestAuthSameID(cfg.AccessTokenSecret)).Get("/user/{user_id:[0-9]+}", h.GetAllSecretsByUserID)
 	})
 
 	h.Router.Route("/v1.0/auth", func(r chi.Router) {

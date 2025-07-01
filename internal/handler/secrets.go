@@ -24,6 +24,11 @@ func (h *Handler) GetSecretByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if secret == nil {
+		h.JSONError(w, http.StatusNotFound, ErrNotFound.Error())
+		return
+	}
+
 	resp, err := json.Marshal(secret)
 	if err != nil {
 		h.JSONError(w, http.StatusBadRequest, err.Error())

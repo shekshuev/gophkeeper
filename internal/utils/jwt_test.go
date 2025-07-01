@@ -25,7 +25,7 @@ func TestCreateToken(t *testing.T) {
 
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
 	assert.True(t, ok, "Claims should be of type jwt.MapClaims")
-	assert.Equal(t, "GopherTalk", claims["iss"], "Issuer should match")
+	assert.Equal(t, "Gophkeeper", claims["iss"], "Issuer should match")
 	assert.Equal(t, userId, claims["sub"], "Subject should match")
 }
 

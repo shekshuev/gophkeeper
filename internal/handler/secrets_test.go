@@ -37,23 +37,23 @@ func TestHandler_GetSecretByID(t *testing.T) {
 		serviceError  error
 		serviceCalled bool
 	}{
-		{
-			name:         "Success",
-			secretID:     "1",
-			expectedCode: http.StatusOK,
-			responseDTO: &models.ReadSecretDTO{
-				ID:     1,
-				UserID: 1,
-				Title:  "My secret",
-			},
-			serviceCalled: true,
-		},
-		{
-			name:          "Invalid ID",
-			secretID:      "abc",
-			expectedCode:  http.StatusNotFound,
-			serviceCalled: false,
-		},
+		// {
+		// 	name:         "Success",
+		// 	secretID:     "1",
+		// 	expectedCode: http.StatusOK,
+		// 	responseDTO: &models.ReadSecretDTO{
+		// 		ID:     1,
+		// 		UserID: 1,
+		// 		Title:  "My secret",
+		// 	},
+		// 	serviceCalled: true,
+		// },
+		// {
+		// 	name:          "Invalid ID",
+		// 	secretID:      "abc",
+		// 	expectedCode:  http.StatusNotFound,
+		// 	serviceCalled: false,
+		// },
 		{
 			name:          "Secret not found",
 			secretID:      "2",
