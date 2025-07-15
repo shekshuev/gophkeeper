@@ -106,6 +106,28 @@ func TestSecretServiceImpl_Create(t *testing.T) {
 	})
 }
 
+func TestSecretServiceImpl_Create_Error(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mocks.NewMockSecretRepository(ctrl)
+	service := NewSecretServiceImpl(mockRepo)
+
+	input := models.CreateSecretDTO{
+		UserID: 10,
+		Title:  "FailSecret",
+		Data:   models.SecretDataDTO{Text: ptr("fail")},
+	}
+
+	mockRepo.EXPECT().
+		Create(gomock.Any(), input).
+		Return(uint64(0), errors.New("insert error"))
+
+	id, err := service.Create(context.Background(), input)
+	assert.Error(t, err)
+	assert.Equal(t, uint64(0), id)
+}
+
 func TestSecretServiceImpl_GetAllByUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -128,6 +150,22 @@ func TestSecretServiceImpl_GetAllByUser(t *testing.T) {
 	})
 }
 
+func TestSecretServiceImpl_GetAllByUser_Error(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mocks.NewMockSecretRepository(ctrl)
+	service := NewSecretServiceImpl(mockRepo)
+
+	mockRepo.EXPECT().
+		GetAllByUser(gomock.Any(), uint64(10)).
+		Return(nil, errors.New("db error"))
+
+	result, err := service.GetAllByUser(context.Background(), 10)
+	assert.Error(t, err)
+	assert.Nil(t, result)
+}
+
 func TestSecretServiceImpl_DeleteByID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -143,6 +181,21 @@ func TestSecretServiceImpl_DeleteByID(t *testing.T) {
 		err := service.DeleteByID(context.Background(), 77)
 		assert.NoError(t, err)
 	})
+}
+
+func TestSecretServiceImpl_DeleteByID_Error(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mocks.NewMockSecretRepository(ctrl)
+	service := NewSecretServiceImpl(mockRepo)
+
+	mockRepo.EXPECT().
+		DeleteByID(gomock.Any(), uint64(77)).
+		Return(errors.New("delete error"))
+
+	err := service.DeleteByID(context.Background(), 77)
+	assert.Error(t, err)
 }
 
 func ptr(s string) *string {

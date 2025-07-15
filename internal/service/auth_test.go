@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -14,7 +15,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestNewAuthServiceImpl(t *testing.T) {
+	cfg := config.GetConfig()
+	repo := mocks.NewMockUserRepository(gomock.NewController(t))
+	svc := NewAuthServiceImpl(repo, &cfg)
+	assert.NotNil(t, svc)
+}
+
 func TestAuthServiceImpl_Login(t *testing.T) {
+	os.Setenv("ACCESS_TOKEN_SECRET", "test")
+	os.Setenv("REFRESH_TOKEN_SECRET", "test")
 	cfg := config.GetConfig()
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -86,6 +96,8 @@ func TestAuthServiceImpl_Login(t *testing.T) {
 }
 
 func TestAuthServiceImpl_Register(t *testing.T) {
+	os.Setenv("ACCESS_TOKEN_SECRET", "test")
+	os.Setenv("REFRESH_TOKEN_SECRET", "test")
 	cfg := config.GetConfig()
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -133,4 +145,51 @@ func TestAuthServiceImpl_Register(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAuthServiceImpl_Register_CreateUserError(t *testing.T) {
+	cfg := config.GetConfig()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	repo := mocks.NewMockUserRepository(ctrl)
+	authService := NewAuthServiceImpl(repo, &cfg)
+	ctx := context.Background()
+
+	dto := models.RegisterUserDTO{
+		UserName:        "testuser",
+		Password:        "password123",
+		PasswordConfirm: "password123",
+		FirstName:       "Test",
+		LastName:        "User",
+	}
+
+	repo.EXPECT().CreateUser(ctx, gomock.Any()).Return(nil, assert.AnError)
+
+	_, err := authService.Register(ctx, dto)
+	assert.Error(t, err)
+}
+
+func TestAuthServiceImpl_generateTokenPair_Errors(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	repo := mocks.NewMockUserRepository(ctrl)
+
+	cfg := &config.Config{
+		AccessTokenSecret:   "",
+		RefreshTokenSecret:  "",
+		AccessTokenExpires:  0,
+		RefreshTokenExpires: 0,
+	}
+
+	service := NewAuthServiceImpl(repo, cfg)
+	user := models.ReadAuthUserDataDTO{
+		ID:       1,
+		UserName: "brokenuser",
+	}
+
+	token, err := service.generateTokenPair(user)
+	assert.Error(t, err)
+	assert.Nil(t, token)
 }

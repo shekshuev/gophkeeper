@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"context"
+	"net/http"
 	"testing"
 	"time"
 
@@ -14,19 +16,19 @@ func TestCreateToken(t *testing.T) {
 	exp := time.Hour
 
 	token, err := CreateToken(secret, userId, exp)
-	assert.Nil(t, err, "Error should be nil")
-	assert.NotEmpty(t, token, "Token should not be empty")
+	assert.Nil(t, err)
+	assert.NotEmpty(t, token)
 
 	parsedToken, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
-	assert.Nil(t, err, "Error should be nil when parsing token")
-	assert.NotNil(t, parsedToken, "Parsed token should not be nil")
+	assert.Nil(t, err)
+	assert.NotNil(t, parsedToken)
 
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
-	assert.True(t, ok, "Claims should be of type jwt.MapClaims")
-	assert.Equal(t, "Gophkeeper", claims["iss"], "Issuer should match")
-	assert.Equal(t, userId, claims["sub"], "Subject should match")
+	assert.True(t, ok)
+	assert.Equal(t, "Gophkeeper", claims["iss"])
+	assert.Equal(t, userId, claims["sub"])
 }
 
 func TestGetToken(t *testing.T) {
@@ -35,18 +37,79 @@ func TestGetToken(t *testing.T) {
 	exp := time.Second * 1
 
 	token, err := CreateToken(secret, userId, exp)
-	assert.Nil(t, err, "Error should be nil")
-	assert.NotEmpty(t, token, "Token should not be empty")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, token)
 
 	claims, err := GetToken(token, secret)
-	assert.Nil(t, err, "Error should be nil when validating token")
-	assert.NotNil(t, claims, "Claims should not be nil")
-	assert.Equal(t, userId, claims.Subject, "Subject should match")
+	assert.NoError(t, err)
+	assert.NotNil(t, claims)
+	assert.Equal(t, userId, claims.Subject)
 
 	time.Sleep(2 * exp)
 
 	claims, err = GetToken(token, secret)
-	assert.NotNil(t, err, "Error should not be nil for expired token")
-	assert.Equal(t, ErrTokenExpired, err, "Error should indicate token expiration")
-	assert.Nil(t, claims, "Claims should be nil for expired token")
+	assert.ErrorIs(t, err, ErrTokenExpired)
+	assert.Nil(t, claims)
+}
+
+func TestGetToken_InvalidSignature(t *testing.T) {
+	token, err := CreateToken("correct-secret", "user", time.Minute)
+	assert.NoError(t, err)
+
+	claims, err := GetToken(token, "wrong-secret")
+	assert.ErrorIs(t, err, ErrInvalidSignature)
+	assert.Nil(t, claims)
+}
+
+func TestGetToken_InvalidFormat(t *testing.T) {
+	claims, err := GetToken("not.a.jwt", "secret")
+	assert.ErrorIs(t, err, ErrTokenInvalid)
+	assert.Nil(t, claims)
+}
+
+func TestGetRawAccessToken(t *testing.T) {
+	req := &http.Request{Header: http.Header{}}
+
+	token, err := GetRawAccessToken(req)
+	assert.ErrorIs(t, err, ErrTokenInvalid)
+	assert.Empty(t, token)
+
+	req.Header.Set("Authorization", "Token somevalue")
+	token, err = GetRawAccessToken(req)
+	assert.ErrorIs(t, err, ErrTokenInvalid)
+
+	req.Header.Set("Authorization", "Bearer sometoken")
+	token, err = GetRawAccessToken(req)
+	assert.NoError(t, err)
+	assert.Equal(t, "sometoken", token)
+}
+
+func TestGetRawRefreshToken(t *testing.T) {
+	req := &http.Request{Header: http.Header{}}
+
+	token, err := GetRawRefreshToken(req)
+	assert.Error(t, err)
+	assert.Empty(t, token)
+
+	req.AddCookie(&http.Cookie{
+		Name:  RefreshTokenCookieName,
+		Value: "refresh123",
+	})
+	token, err = GetRawRefreshToken(req)
+	assert.NoError(t, err)
+	assert.Equal(t, "refresh123", token)
+}
+
+func TestContextClaims(t *testing.T) {
+	claims := jwt.RegisteredClaims{Subject: "user123"}
+
+	ctx := context.Background()
+	ctxWithClaims := PutClaimsToContext(ctx, claims)
+
+	extracted, ok := GetClaimsFromContext(ctxWithClaims)
+	assert.True(t, ok)
+	assert.Equal(t, claims.Subject, extracted.Subject)
+
+	_, ok = GetClaimsFromContext(ctx)
+	assert.False(t, ok)
 }

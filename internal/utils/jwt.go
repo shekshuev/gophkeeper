@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -58,6 +59,9 @@ func GetRawRefreshToken(req *http.Request) (string, error) {
 // CreateToken создаёт JWT-токен с указанным userId, сроком жизни и секретом.
 // Возвращает подписанную строку токена.
 func CreateToken(secret, userId string, exp time.Duration) (string, error) {
+	if secret == "" {
+		return "", errors.New("secret cannot be empty")
+	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer:    "Gophkeeper",
 		Subject:   userId,

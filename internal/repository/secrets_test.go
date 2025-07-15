@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"regexp"
 	"testing"
@@ -49,6 +50,30 @@ func TestSecretRepositoryImpl_Create(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestSecretRepositoryImpl_Create_QueryError(t *testing.T) {
+	cfg := config.GetConfig()
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	dto := models.CreateSecretDTO{
+		UserID: 1,
+		Title:  "Test",
+		Data:   models.SecretDataDTO{Text: ptr("secret")},
+	}
+	dataBytes, _ := json.Marshal(dto.Data)
+
+	mock.ExpectQuery("insert into secrets").
+		WithArgs(dto.UserID, dto.Title, dataBytes).
+		WillReturnError(assert.AnError)
+
+	repo := &SecretRepositoryImpl{cfg: &cfg, db: db, logger: logger.NewLogger()}
+	id, err := repo.Create(context.Background(), dto)
+	assert.Error(t, err)
+	assert.Equal(t, uint64(0), id)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestSecretRepositoryImpl_GetByID(t *testing.T) {
 	cfg := config.GetConfig()
 	db, mock, err := sqlmock.New()
@@ -82,6 +107,60 @@ func TestSecretRepositoryImpl_GetByID(t *testing.T) {
 	assert.Equal(t, "Note", secret.Title)
 	assert.NotNil(t, secret.Data.Text)
 	assert.Equal(t, "some secret text", *secret.Data.Text)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSecretRepositoryImpl_GetByID_NotFound(t *testing.T) {
+	cfg := config.GetConfig()
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	mock.ExpectQuery("select id, user_id, title").
+		WithArgs(uint64(999)).
+		WillReturnError(sql.ErrNoRows)
+
+	repo := &SecretRepositoryImpl{cfg: &cfg, db: db, logger: logger.NewLogger()}
+	secret, err := repo.GetByID(context.Background(), 999)
+	assert.NoError(t, err)
+	assert.Nil(t, secret)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSecretRepositoryImpl_GetByID_QueryError(t *testing.T) {
+	cfg := config.GetConfig()
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	mock.ExpectQuery("select id, user_id, title").
+		WithArgs(uint64(1)).
+		WillReturnError(assert.AnError)
+
+	repo := &SecretRepositoryImpl{cfg: &cfg, db: db, logger: logger.NewLogger()}
+	secret, err := repo.GetByID(context.Background(), 1)
+	assert.Error(t, err)
+	assert.Nil(t, secret)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSecretRepositoryImpl_GetByID_UnmarshalError(t *testing.T) {
+	cfg := config.GetConfig()
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	now := time.Now()
+	mock.ExpectQuery("select id, user_id, title").
+		WithArgs(uint64(1)).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "user_id", "title", "data", "created_at", "updated_at",
+		}).AddRow(1, 42, "Broken", []byte("not-json"), now, now))
+
+	repo := &SecretRepositoryImpl{cfg: &cfg, db: db, logger: logger.NewLogger()}
+	secret, err := repo.GetByID(context.Background(), 1)
+	assert.ErrorIs(t, err, ErrUnmarshalPayload)
+	assert.Nil(t, secret)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -127,6 +206,63 @@ func TestSecretRepositoryImpl_GetAllByUser(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestSecretRepositoryImpl_GetAllByUser_QueryError(t *testing.T) {
+	cfg := config.GetConfig()
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	mock.ExpectQuery("select id, user_id, title").
+		WithArgs(uint64(1)).
+		WillReturnError(assert.AnError)
+
+	repo := &SecretRepositoryImpl{cfg: &cfg, db: db, logger: logger.NewLogger()}
+	secrets, err := repo.GetAllByUser(context.Background(), 1)
+	assert.Error(t, err)
+	assert.Nil(t, secrets)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSecretRepositoryImpl_GetAllByUser_ScanError(t *testing.T) {
+	cfg := config.GetConfig()
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	mock.ExpectQuery("select id, user_id, title").
+		WithArgs(uint64(42)).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "user_id",
+		}).AddRow(1, 42))
+
+	repo := &SecretRepositoryImpl{cfg: &cfg, db: db, logger: logger.NewLogger()}
+	secrets, err := repo.GetAllByUser(context.Background(), 42)
+	assert.Error(t, err)
+	assert.Nil(t, secrets)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSecretRepositoryImpl_GetAllByUser_UnmarshalError(t *testing.T) {
+	cfg := config.GetConfig()
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	now := time.Now()
+
+	mock.ExpectQuery("select id, user_id, title").
+		WithArgs(uint64(42)).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "user_id", "title", "data", "created_at", "updated_at",
+		}).AddRow(1, 42, "Bad", []byte("broken-json"), now, now))
+
+	repo := &SecretRepositoryImpl{cfg: &cfg, db: db, logger: logger.NewLogger()}
+	secrets, err := repo.GetAllByUser(context.Background(), 42)
+	assert.ErrorIs(t, err, ErrUnmarshalPayload)
+	assert.Nil(t, secrets)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestSecretRepositoryImpl_DeleteByID(t *testing.T) {
 	cfg := config.GetConfig()
 	db, mock, err := sqlmock.New()
@@ -144,6 +280,22 @@ func TestSecretRepositoryImpl_DeleteByID(t *testing.T) {
 
 	err = repo.DeleteByID(context.Background(), 1)
 	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSecretRepositoryImpl_DeleteByID_Error(t *testing.T) {
+	cfg := config.GetConfig()
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	mock.ExpectExec("delete from secrets").
+		WithArgs(uint64(123)).
+		WillReturnError(assert.AnError)
+
+	repo := &SecretRepositoryImpl{cfg: &cfg, db: db, logger: logger.NewLogger()}
+	err = repo.DeleteByID(context.Background(), 123)
+	assert.Error(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
