@@ -9,6 +9,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/shekshuev/gophkeeper/internal/config"
+	"github.com/shekshuev/gophkeeper/internal/logger"
 	"github.com/shekshuev/gophkeeper/internal/models"
 	"github.com/stretchr/testify/assert"
 )
@@ -52,7 +53,7 @@ func TestUserRepositoryImpl_CreateUser(t *testing.T) {
 		t.Fatalf("Error creating db mock: %v", err)
 	}
 	defer db.Close()
-	r := &UserRepositoryImpl{cfg: &cfg, db: db}
+	r := &UserRepositoryImpl{cfg: &cfg, db: db, logger: logger.NewLogger()}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.hasError {
@@ -133,7 +134,7 @@ func TestUserRepositoryImpl_GetUserByUserName(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := &UserRepositoryImpl{cfg: &cfg, db: db}
+	r := &UserRepositoryImpl{cfg: &cfg, db: db, logger: logger.NewLogger()}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -205,7 +206,7 @@ func TestUserRepositoryImpl_GetUserByID(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := &UserRepositoryImpl{cfg: &cfg, db: db}
+	r := &UserRepositoryImpl{cfg: &cfg, db: db, logger: logger.NewLogger()}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

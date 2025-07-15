@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/shekshuev/gophkeeper/internal/config"
+	"github.com/shekshuev/gophkeeper/internal/logger"
 	"github.com/shekshuev/gophkeeper/internal/mocks"
 	"github.com/shekshuev/gophkeeper/internal/models"
 	"github.com/shekshuev/gophkeeper/internal/utils"
@@ -19,7 +20,7 @@ func TestAuthServiceImpl_Login(t *testing.T) {
 	defer ctrl.Finish()
 
 	repo := mocks.NewMockUserRepository(ctrl)
-	authService := &AuthServiceImpl{repo: repo, cfg: &cfg}
+	authService := &AuthServiceImpl{repo: repo, cfg: &cfg, logger: logger.NewLogger()}
 	ctx := context.Background()
 
 	testCases := []struct {
@@ -90,7 +91,7 @@ func TestAuthServiceImpl_Register(t *testing.T) {
 	defer ctrl.Finish()
 
 	repo := mocks.NewMockUserRepository(ctrl)
-	authService := &AuthServiceImpl{repo: repo, cfg: &cfg}
+	authService := &AuthServiceImpl{repo: repo, cfg: &cfg, logger: logger.NewLogger()}
 	ctx := context.Background()
 
 	fixedPasswordHash := "$2a$10$CmIxNqxCFrgFoji4qyka0.UvTV4wG54LN5UJjV7mfH6q0caiNGUvK"

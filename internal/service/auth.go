@@ -4,7 +4,10 @@ import (
 	"context"
 	"strconv"
 
+	"go.uber.org/zap"
+
 	"github.com/shekshuev/gophkeeper/internal/config"
+	"github.com/shekshuev/gophkeeper/internal/logger"
 	"github.com/shekshuev/gophkeeper/internal/models"
 	"github.com/shekshuev/gophkeeper/internal/repository"
 	"github.com/shekshuev/gophkeeper/internal/utils"
@@ -13,13 +16,18 @@ import (
 // AuthServiceImpl — реализация интерфейса AuthService.
 // Отвечает за логику регистрации, аутентификации и генерации JWT-токенов.
 type AuthServiceImpl struct {
-	repo repository.UserRepository // Репозиторий пользователей
-	cfg  *config.Config            // Конфигурация приложения (секреты и срок жизни токенов)
+	repo   repository.UserRepository // Репозиторий пользователей
+	cfg    *config.Config            // Конфигурация приложения (секреты и срок жизни токенов)
+	logger *logger.Logger            // Логгер
 }
 
 // NewAuthServiceImpl создаёт новый экземпляр AuthServiceImpl с указанным репозиторием и конфигурацией.
 func NewAuthServiceImpl(repo repository.UserRepository, cfg *config.Config) *AuthServiceImpl {
-	return &AuthServiceImpl{repo: repo, cfg: cfg}
+	return &AuthServiceImpl{
+		repo:   repo,
+		cfg:    cfg,
+		logger: logger.NewLogger(),
+	}
 }
 
 // Login выполняет аутентификацию пользователя по логину и паролю.
@@ -27,11 +35,15 @@ func NewAuthServiceImpl(repo repository.UserRepository, cfg *config.Config) *Aut
 func (s *AuthServiceImpl) Login(ctx context.Context, dto models.LoginUserDTO) (*models.ReadTokenDTO, error) {
 	user, err := s.repo.GetUserByUserName(ctx, dto.UserName)
 	if err != nil {
+		s.logger.Log.Warn("Пользователь не найден при логине", zap.String("user_name", dto.UserName), zap.Error(err))
 		return nil, ErrUserNotFound
 	}
 	if !utils.VerifyPassword(dto.Password, user.PasswordHash) {
+		s.logger.Log.Warn("Неверный пароль", zap.String("user_name", dto.UserName))
 		return nil, ErrWrongPassword
 	}
+
+	s.logger.Log.Info("Пользователь успешно аутентифицирован", zap.Uint64("user_id", user.ID), zap.String("user_name", user.UserName))
 	return s.generateTokenPair(*user)
 }
 
@@ -46,8 +58,11 @@ func (s *AuthServiceImpl) Register(ctx context.Context, dto models.RegisterUserD
 	}
 	user, err := s.repo.CreateUser(ctx, createDTO)
 	if err != nil {
+		s.logger.Log.Error("Ошибка при регистрации пользователя", zap.String("user_name", dto.UserName), zap.Error(err))
 		return nil, err
 	}
+
+	s.logger.Log.Info("Пользователь успешно зарегистрирован", zap.Uint64("user_id", user.ID), zap.String("user_name", user.UserName))
 	return s.generateTokenPair(*user)
 }
 
@@ -62,6 +77,7 @@ func (s *AuthServiceImpl) generateTokenPair(user models.ReadAuthUserDataDTO) (*m
 		s.cfg.AccessTokenExpires,
 	)
 	if err != nil {
+		s.logger.Log.Error("Ошибка при создании access токена", zap.Uint64("user_id", user.ID), zap.Error(err))
 		return nil, err
 	}
 
@@ -71,9 +87,11 @@ func (s *AuthServiceImpl) generateTokenPair(user models.ReadAuthUserDataDTO) (*m
 		s.cfg.RefreshTokenExpires,
 	)
 	if err != nil {
+		s.logger.Log.Error("Ошибка при создании refresh токена", zap.Uint64("user_id", user.ID), zap.Error(err))
 		return nil, err
 	}
 
+	s.logger.Log.Info("JWT-токены успешно сгенерированы", zap.Uint64("user_id", user.ID))
 	return &models.ReadTokenDTO{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,

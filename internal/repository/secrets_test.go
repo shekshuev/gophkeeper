@@ -9,6 +9,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/shekshuev/gophkeeper/internal/config"
+	"github.com/shekshuev/gophkeeper/internal/logger"
 	"github.com/shekshuev/gophkeeper/internal/models"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,7 +20,7 @@ func TestSecretRepositoryImpl_Create(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Close()
 
-	repo := &SecretRepositoryImpl{cfg: &cfg, db: db}
+	repo := &SecretRepositoryImpl{cfg: &cfg, db: db, logger: logger.NewLogger()}
 
 	dto := models.CreateSecretDTO{
 		UserID: 42,
@@ -54,7 +55,7 @@ func TestSecretRepositoryImpl_GetByID(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Close()
 
-	repo := &SecretRepositoryImpl{cfg: &cfg, db: db}
+	repo := &SecretRepositoryImpl{cfg: &cfg, db: db, logger: logger.NewLogger()}
 
 	now := time.Now()
 	rawData := models.SecretDataDTO{
@@ -90,7 +91,7 @@ func TestSecretRepositoryImpl_GetAllByUser(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Close()
 
-	repo := &SecretRepositoryImpl{cfg: &cfg, db: db}
+	repo := &SecretRepositoryImpl{cfg: &cfg, db: db, logger: logger.NewLogger()}
 
 	now := time.Now()
 	data := models.SecretDataDTO{
@@ -132,7 +133,7 @@ func TestSecretRepositoryImpl_DeleteByID(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Close()
 
-	repo := &SecretRepositoryImpl{cfg: &cfg, db: db}
+	repo := &SecretRepositoryImpl{cfg: &cfg, db: db, logger: logger.NewLogger()}
 
 	mock.ExpectExec(regexp.QuoteMeta(`
 		delete from secrets

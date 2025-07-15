@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-playground/validator/v10"
 	"github.com/shekshuev/gophkeeper/internal/config"
+	"github.com/shekshuev/gophkeeper/internal/logger"
 	"github.com/shekshuev/gophkeeper/internal/middleware"
 	"github.com/shekshuev/gophkeeper/internal/service"
 	"github.com/shekshuev/gophkeeper/internal/utils"
@@ -30,6 +31,7 @@ type Handler struct {
 	Router   *chi.Mux
 	validate *validator.Validate
 	cfg      *config.Config
+	logger   *logger.Logger
 }
 
 type ErrorResponse struct {
@@ -60,7 +62,7 @@ func NewHandler(
 	router.Use(chiMiddleware.SetHeader("Content-Type", "application/json"))
 	router.Use(chiMiddleware.Recoverer)
 	router.Use(cors.AllowAll().Handler)
-	h := &Handler{users: users, auth: auth, secrets: secrets, Router: router, validate: validate, cfg: cfg}
+	h := &Handler{users: users, auth: auth, secrets: secrets, Router: router, validate: validate, cfg: cfg, logger: logger.NewLogger()}
 
 	h.Router.Route("/v1.0/users", func(r chi.Router) {
 		r.Use(middleware.RequestAuth(cfg.AccessTokenSecret))
