@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/shekshuev/gophkeeper/internal/models"
+	"github.com/shekshuev/gophkeeper/internal/utils"
 )
 
 // GetSecretByID — возвращает секрет по ID.
@@ -82,6 +83,20 @@ func (h *Handler) CreateSecret(w http.ResponseWriter, r *http.Request) {
 		h.JSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
+
+	claims, ok := utils.GetClaimsFromContext(r.Context())
+	if !ok {
+		h.JSONError(w, http.StatusUnauthorized, "missing or invalid token")
+		return
+	}
+
+	userID, err := strconv.ParseUint(claims.Subject, 10, 64)
+	if err != nil {
+		h.JSONError(w, http.StatusUnauthorized, "invalid user ID in token")
+		return
+	}
+
+	dto.UserID = userID
 
 	id, err := h.secrets.Create(r.Context(), dto)
 	if err != nil {
