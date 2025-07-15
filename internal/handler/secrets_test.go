@@ -22,6 +22,8 @@ func TestHandler_GetSecretByID(t *testing.T) {
 	defer ctrl.Finish()
 
 	secrets := mocks.NewMockSecretService(ctrl)
+	os.Setenv("ACCESS_TOKEN_SECRET", "test")
+	os.Setenv("ACCESS_TOKEN_EXPIRES", "1h")
 	cfg := config.GetConfig()
 	handler := NewHandler(nil, nil, secrets, &cfg)
 	server := httptest.NewServer(handler.Router)
@@ -37,23 +39,23 @@ func TestHandler_GetSecretByID(t *testing.T) {
 		serviceError  error
 		serviceCalled bool
 	}{
-		// {
-		// 	name:         "Success",
-		// 	secretID:     "1",
-		// 	expectedCode: http.StatusOK,
-		// 	responseDTO: &models.ReadSecretDTO{
-		// 		ID:     1,
-		// 		UserID: 1,
-		// 		Title:  "My secret",
-		// 	},
-		// 	serviceCalled: true,
-		// },
-		// {
-		// 	name:          "Invalid ID",
-		// 	secretID:      "abc",
-		// 	expectedCode:  http.StatusNotFound,
-		// 	serviceCalled: false,
-		// },
+		{
+			name:         "Success",
+			secretID:     "1",
+			expectedCode: http.StatusOK,
+			responseDTO: &models.ReadSecretDTO{
+				ID:     1,
+				UserID: 1,
+				Title:  "My secret",
+			},
+			serviceCalled: true,
+		},
+		{
+			name:          "Invalid ID",
+			secretID:      "abc",
+			expectedCode:  http.StatusNotFound,
+			serviceCalled: false,
+		},
 		{
 			name:          "Secret not found",
 			secretID:      "2",
@@ -162,7 +164,7 @@ func TestHandler_GetAllSecretsByUserID(t *testing.T) {
 	server := httptest.NewServer(handler.Router)
 	defer server.Close()
 
-	// accessTokenUser10, _ := utils.CreateToken(cfg.AccessTokenSecret, "10", cfg.AccessTokenExpires)
+	accessTokenUser10, _ := utils.CreateToken(cfg.AccessTokenSecret, "10", cfg.AccessTokenExpires)
 	accessTokenUser11, _ := utils.CreateToken(cfg.AccessTokenSecret, "11", cfg.AccessTokenExpires)
 
 	testCases := []struct {
@@ -172,20 +174,20 @@ func TestHandler_GetAllSecretsByUserID(t *testing.T) {
 		expectedCode  int
 		serviceCalled bool
 	}{
-		// {
-		// 	name:          "Success (same user ID)",
-		// 	requestUserID: "10",
-		// 	accessToken:   accessTokenUser10,
-		// 	expectedCode:  http.StatusOK,
-		// 	serviceCalled: true,
-		// },
-		// {
-		// 	name:          "Unauthorized (no token)",
-		// 	requestUserID: "10",
-		// 	accessToken:   "",
-		// 	expectedCode:  http.StatusUnauthorized,
-		// 	serviceCalled: false,
-		// },
+		{
+			name:          "Success (same user ID)",
+			requestUserID: "10",
+			accessToken:   accessTokenUser10,
+			expectedCode:  http.StatusOK,
+			serviceCalled: true,
+		},
+		{
+			name:          "Unauthorized (no token)",
+			requestUserID: "10",
+			accessToken:   "",
+			expectedCode:  http.StatusUnauthorized,
+			serviceCalled: false,
+		},
 		{
 			name:          "Forbidden (token subject ≠ user_id)",
 			requestUserID: "10",
