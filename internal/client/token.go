@@ -12,13 +12,16 @@ import (
 
 const tokenFileName = "token.json"
 
-// tokenPath возвращает путь к файлу токена (например, ~/.gophkeeper/token.json).
+// tokenPath — возвращает абсолютный путь к файлу токена.
+// Например: ~/.gophkeeper/token.json.
 func tokenPath() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".gophkeeper", tokenFileName)
 }
 
-// SaveToken сохраняет JWT access-токен в файл.
+// SaveToken — сохраняет JWT access-токен в файл.
+// Создаёт директорию ~/.gophkeeper при необходимости.
+// Токен сохраняется в JSON-формате с правами 0600.
 func SaveToken(token string) error {
 	_ = os.MkdirAll(filepath.Dir(tokenPath()), 0700)
 	data := struct {
@@ -30,7 +33,8 @@ func SaveToken(token string) error {
 	return os.WriteFile(tokenPath(), b, 0600)
 }
 
-// LoadToken загружает JWT access-токен из файла.
+// LoadToken — загружает access-токен из локального файла.
+// Возвращает строку токена или ошибку, если файл не существует или повреждён.
 func LoadToken() (string, error) {
 	data, err := os.ReadFile(tokenPath())
 	if err != nil {
@@ -45,7 +49,8 @@ func LoadToken() (string, error) {
 	return parsed.Token, nil
 }
 
-// GetUserIDFromToken возвращает subject из access токена.
+// GetUserIDFromToken — парсит токен и возвращает значение поля subject (user ID).
+// Используется для определения текущего пользователя в клиенте.
 func GetUserIDFromToken() (string, error) {
 	cfg := config.GetConfig()
 	tokenStr, err := LoadToken()
@@ -62,7 +67,7 @@ func GetUserIDFromToken() (string, error) {
 	return claims.Subject, nil
 }
 
-// Logout удаляет токен с диска.
+// Logout — удаляет локальный файл токена (выход из системы).
 func Logout() error {
 	return os.Remove(tokenPath())
 }

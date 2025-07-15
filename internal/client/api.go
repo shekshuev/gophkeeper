@@ -5,7 +5,13 @@ import (
 	"github.com/shekshuev/gophkeeper/internal/config"
 )
 
-// api возвращает сконфигурированный resty.Client.
+// api возвращает сконфигурированный HTTP-клиент resty.Client с базовым URL и заголовком авторизации.
+//
+// Клиент автоматически:
+//   - Устанавливает базовый адрес сервера из конфигурации (`cfg.ServerAddress`).
+//   - Добавляет заголовок `Authorization: Bearer <токен>`, если токен ранее сохранён.
+//
+// Используется везде, где требуется выполнять HTTP-запросы к API сервера.
 func api() *resty.Client {
 	cfg := config.GetConfig()
 
@@ -16,5 +22,6 @@ func api() *resty.Client {
 	if token != "" {
 		rc.SetHeader("Authorization", "Bearer "+token)
 	}
+
 	return rc
 }

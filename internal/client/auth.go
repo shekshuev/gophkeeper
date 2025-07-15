@@ -9,6 +9,7 @@ import (
 	"github.com/shekshuev/gophkeeper/internal/models"
 )
 
+// prompt отображает текстовый вопрос пользователю и считывает строку с консоли.
 func prompt(label string) string {
 	fmt.Print(label)
 	scanner := bufio.NewScanner(os.Stdin)
@@ -16,6 +17,15 @@ func prompt(label string) string {
 	return strings.TrimSpace(scanner.Text())
 }
 
+// Register — CLI-обёртка для регистрации нового пользователя.
+//
+// Пошагово запрашивает у пользователя:
+//   - имя пользователя
+//   - пароль и его подтверждение
+//   - имя и фамилию
+//
+// Выполняет POST-запрос к API /v1.0/auth/register.
+// Выводит сообщение об успехе или ошибке.
 func Register() {
 	user := models.RegisterUserDTO{
 		UserName:        prompt("Имя пользователя: "),
@@ -41,6 +51,12 @@ func Register() {
 	fmt.Println("Успешно зарегистрирован.")
 }
 
+// Login — CLI-обёртка для авторизации пользователя.
+//
+// Запрашивает у пользователя логин и пароль,
+// отправляет их на эндпоинт /v1.0/auth/login.
+//
+// При успешной авторизации сохраняет access-токен локально и выводит сообщение об успешном входе.
 func Login() {
 	user := models.LoginUserDTO{
 		UserName: prompt("Username: "),

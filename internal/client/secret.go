@@ -10,6 +10,15 @@ import (
 	"github.com/shekshuev/gophkeeper/internal/models"
 )
 
+// CreateSecret — CLI-обёртка для создания нового секрета.
+// Поддерживает типы:
+//
+//	[1] Произвольный текст
+//	[2] Логин + пароль
+//	[3] Банковская карта
+//
+// Пользователь пошагово вводит данные, после чего выполняется POST-запрос на /v1.0/secrets.
+// В случае успеха выводит HTTP-статус и тело ответа.
 func CreateSecret(title string) {
 	rc := api()
 
@@ -71,6 +80,8 @@ func CreateSecret(title string) {
 	fmt.Println(resp.Status(), string(resp.Body()))
 }
 
+// GetSecret — CLI-обёртка для получения одного секрета по ID.
+// Выполняет GET-запрос на /v1.0/secrets/{id} и выводит форматированный JSON с данными секрета.
 func GetSecret(id uint64) {
 	rc := api()
 
@@ -91,6 +102,9 @@ func GetSecret(id uint64) {
 	fmt.Println(string(j))
 }
 
+// ListSecrets — CLI-обёртка для получения списка всех секретов пользователя.
+// Запрашивает user_id из токена и выполняет GET-запрос на /v1.0/secrets/user/{user_id}.
+// Выводит ID и название каждого секрета.
 func ListSecrets() {
 	rc := api()
 
@@ -118,6 +132,8 @@ func ListSecrets() {
 	}
 }
 
+// DeleteSecret — CLI-обёртка для удаления секрета по ID.
+// Выполняет DELETE-запрос на /v1.0/secrets/{id} и выводит HTTP-статус.
 func DeleteSecret(id uint64) {
 	rc := api()
 
@@ -130,7 +146,8 @@ func DeleteSecret(id uint64) {
 	fmt.Println(resp.Status())
 }
 
-// promptInput — простой ввод из терминала
+// promptInput — вспомогательная функция для ввода строки с консоли.
+// Выводит метку и возвращает trimmed-значение.
 func promptInput(label string) string {
 	fmt.Print(label)
 	scanner := bufio.NewScanner(os.Stdin)
