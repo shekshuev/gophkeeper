@@ -41,19 +41,24 @@ func printBuildInfo() {
 	fmt.Printf("Build commit: %s\n", buildCommit)
 }
 
-func main() {
-	printBuildInfo()
-	cfg := config.GetConfig()
-	userRepo := repository.NewUserRepositoryImpl(&cfg)
-	secretRepo := repository.NewSecretRepositoryImpl(&cfg)
-	userService := service.NewUserServiceImpl(userRepo, &cfg)
-	authService := service.NewAuthServiceImpl(userRepo, &cfg)
+func NewServer(cfg *config.Config) *http.Server {
+	userRepo := repository.NewUserRepositoryImpl(cfg)
+	secretRepo := repository.NewSecretRepositoryImpl(cfg)
+	userService := service.NewUserServiceImpl(userRepo, cfg)
+	authService := service.NewAuthServiceImpl(userRepo, cfg)
 	secretService := service.NewSecretServiceImpl(secretRepo)
-	userHandler := handler.NewHandler(userService, authService, secretService, &cfg)
-	server := &http.Server{
+	userHandler := handler.NewHandler(userService, authService, secretService, cfg)
+
+	return &http.Server{
 		Addr:    cfg.ServerAddress,
 		Handler: userHandler.Router,
 	}
+}
+
+func main() {
+	printBuildInfo()
+	cfg := config.GetConfig()
+	server := NewServer(&cfg)
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
 	go func() {

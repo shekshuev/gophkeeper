@@ -84,6 +84,10 @@ func NewHandler(
 		r.Post("/register", h.Register)
 	})
 
+	h.Router.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
+		w.Write([]byte("ok"))
+	})
+
 	return h
 }
 
