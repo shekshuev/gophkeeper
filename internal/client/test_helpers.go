@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,7 +11,7 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-func mockInput(inputs ...string) func() {
+func MockInput(inputs ...string) func() {
 	r, w, _ := os.Pipe()
 	origStdin := os.Stdin
 	os.Stdin = r
@@ -53,4 +54,18 @@ type errorRoundTripper struct{}
 
 func (e *errorRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 	return nil, fmt.Errorf("request failed")
+}
+
+func CaptureOutput(f func()) string {
+	var buf bytes.Buffer
+	stdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	f()
+
+	w.Close()
+	buf.ReadFrom(r)
+	os.Stdout = stdout
+	return buf.String()
 }

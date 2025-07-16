@@ -12,7 +12,7 @@ import (
 )
 
 func TestRegister_Success(t *testing.T) {
-	defer mockInput("testuser", "secret", "secret", "John", "Doe")()
+	defer MockInput("testuser", "secret", "secret", "John", "Doe")()
 
 	client := newMockClient(200, `{}`)
 
@@ -31,7 +31,7 @@ func TestRegister_Success(t *testing.T) {
 }
 
 func TestRegister_Fail(t *testing.T) {
-	defer mockInput("testuser", "secret", "secret", "John", "Doe")()
+	defer MockInput("testuser", "secret", "secret", "John", "Doe")()
 
 	client := newMockClient(400, `{"error":"Username already exists"}`)
 
@@ -50,7 +50,7 @@ func TestRegister_Fail(t *testing.T) {
 }
 
 func TestRegister_HttpError(t *testing.T) {
-	defer mockInput("u", "p", "p", "f", "l")()
+	defer MockInput("u", "p", "p", "f", "l")()
 
 	client := resty.New()
 	client.SetTransport(&mockRoundTripper{
@@ -73,7 +73,7 @@ func TestRegister_HttpError(t *testing.T) {
 }
 
 func TestLogin_Success(t *testing.T) {
-	defer mockInput("testuser", "secret")()
+	defer MockInput("testuser", "secret")()
 
 	tokens := &models.ReadTokenDTO{}
 	client := resty.New()
@@ -103,7 +103,7 @@ func TestLogin_Success(t *testing.T) {
 }
 
 func TestLogin_Invalid(t *testing.T) {
-	defer mockInput("testuser", "wrongpass")()
+	defer MockInput("testuser", "wrongpass")()
 
 	client := newMockClient(401, `Unauthorized`)
 
@@ -124,7 +124,7 @@ func TestLogin_Invalid(t *testing.T) {
 }
 
 func TestLogin_UnmarshalError(t *testing.T) {
-	defer mockInput("u", "p")()
+	defer MockInput("u", "p")()
 
 	client := resty.New()
 	client.SetTransport(&mockRoundTripper{
@@ -147,7 +147,7 @@ func TestLogin_UnmarshalError(t *testing.T) {
 }
 
 func TestLogin_RequestError(t *testing.T) {
-	defer mockInput("u", "p")()
+	defer MockInput("u", "p")()
 
 	client := resty.New()
 	client.SetTransport(&errorRoundTripper{})

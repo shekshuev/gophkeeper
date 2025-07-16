@@ -44,17 +44,22 @@ func prompt(label string) string {
 	return strings.TrimSpace(scanner.Text())
 }
 
-func isTokenValid() bool {
-	cfg := config.GetConfig()
-	tokenStr, err := client.LoadToken()
+func isTokenValid(loadToken func() (string, error), getConfig func() config.Config) bool {
+	cfg := getConfig()
+	tokenStr, err := loadToken()
 	if err != nil || tokenStr == "" {
 		return false
 	}
+
 	claims, err := utils.GetToken(tokenStr, cfg.AccessTokenSecret)
 	if err != nil || claims.Subject == "" {
 		return false
 	}
 	return true
+}
+
+func isTokenValidDefault() bool {
+	return isTokenValid(client.LoadToken, config.GetConfig)
 }
 
 func mainMenu() bool {
@@ -119,7 +124,7 @@ func authMenu() bool {
 			client.Register(client.Api())
 		case "2":
 			client.Login(client.Api(), client.SaveToken)
-			if isTokenValid() {
+			if isTokenValidDefault() {
 				fmt.Println("Вход выполнен успешно.")
 				return true
 			}
@@ -137,7 +142,7 @@ func main() {
 	printBuildInfo()
 
 	for {
-		if isTokenValid() {
+		if isTokenValidDefault() {
 			if !mainMenu() {
 				continue
 			}

@@ -1,28 +1,12 @@
 package client
 
 import (
-	"bytes"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
 )
-
-func captureOutput(f func()) string {
-	var buf bytes.Buffer
-	stdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	f()
-
-	w.Close()
-	buf.ReadFrom(r)
-	os.Stdout = stdout
-	return buf.String()
-}
 
 func TestGetSecret_Success(t *testing.T) {
 	body := `{
@@ -40,7 +24,7 @@ func TestGetSecret_Success(t *testing.T) {
 		body:       body,
 	})
 
-	output := captureOutput(func() {
+	output := CaptureOutput(func() {
 		GetSecret(1, client)
 	})
 
@@ -54,7 +38,7 @@ func TestGetSecret_NotFound(t *testing.T) {
 		body:       `Not found`,
 	})
 
-	output := captureOutput(func() {
+	output := CaptureOutput(func() {
 		GetSecret(999, client)
 	})
 
@@ -69,7 +53,7 @@ func TestListSecrets_Success(t *testing.T) {
 		body:       `[{"id":1,"title":"First"},{"id":2,"title":"Second"}]`,
 	})
 
-	output := captureOutput(func() {
+	output := CaptureOutput(func() {
 		ListSecrets(client, func() (string, error) {
 			return "42", nil
 		})
@@ -81,7 +65,7 @@ func TestListSecrets_Success(t *testing.T) {
 
 func TestListSecrets_Unauthorized(t *testing.T) {
 
-	output := captureOutput(func() {
+	output := CaptureOutput(func() {
 		ListSecrets(resty.New(), func() (string, error) {
 			return "", fmt.Errorf("unauthorized")
 		})
@@ -93,7 +77,7 @@ func TestListSecrets_Unauthorized(t *testing.T) {
 func TestDeleteSecret_Success(t *testing.T) {
 	client := newMockClient(204, ``)
 
-	output := captureOutput(func() {
+	output := CaptureOutput(func() {
 		DeleteSecret(123, client)
 	})
 
@@ -104,7 +88,7 @@ func TestDeleteSecret_Error(t *testing.T) {
 	client := resty.New()
 	client.SetTransport(&errorRoundTripper{})
 
-	output := captureOutput(func() {
+	output := CaptureOutput(func() {
 		DeleteSecret(123, client)
 	})
 
@@ -112,12 +96,12 @@ func TestDeleteSecret_Error(t *testing.T) {
 }
 
 func TestCreateSecret_Text(t *testing.T) {
-	restore := mockInput("1", "hello world")
+	restore := MockInput("1", "hello world")
 	defer restore()
 
 	client := newMockClient(201, `{"ok":true}`)
 
-	output := captureOutput(func() {
+	output := CaptureOutput(func() {
 		CreateSecret("MyText", client)
 	})
 
@@ -125,12 +109,12 @@ func TestCreateSecret_Text(t *testing.T) {
 }
 
 func TestCreateSecret_LoginPassword(t *testing.T) {
-	restore := mockInput("2", "admin", "pass123")
+	restore := MockInput("2", "admin", "pass123")
 	defer restore()
 
 	client := newMockClient(200, `{"ok":true}`)
 
-	output := captureOutput(func() {
+	output := CaptureOutput(func() {
 		CreateSecret("Creds", client)
 	})
 
@@ -138,12 +122,12 @@ func TestCreateSecret_LoginPassword(t *testing.T) {
 }
 
 func TestCreateSecret_Card(t *testing.T) {
-	restore := mockInput("3", "4111111111111111", "John Doe", "12/26", "123")
+	restore := MockInput("3", "4111111111111111", "John Doe", "12/26", "123")
 	defer restore()
 
 	client := newMockClient(200, `{"ok":true}`)
 
-	output := captureOutput(func() {
+	output := CaptureOutput(func() {
 		CreateSecret("Card", client)
 	})
 
@@ -151,10 +135,10 @@ func TestCreateSecret_Card(t *testing.T) {
 }
 
 func TestCreateSecret_Binary_NotSupported(t *testing.T) {
-	restore := mockInput("4")
+	restore := MockInput("4")
 	defer restore()
 
-	output := captureOutput(func() {
+	output := CaptureOutput(func() {
 		CreateSecret("Binary", resty.New())
 	})
 
@@ -162,10 +146,10 @@ func TestCreateSecret_Binary_NotSupported(t *testing.T) {
 }
 
 func TestCreateSecret_InvalidType(t *testing.T) {
-	restore := mockInput("999")
+	restore := MockInput("999")
 	defer restore()
 
-	output := captureOutput(func() {
+	output := CaptureOutput(func() {
 		CreateSecret("Unknown", resty.New())
 	})
 
