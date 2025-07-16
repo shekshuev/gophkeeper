@@ -11,7 +11,7 @@ import (
 func TestAPI_BaseURL(t *testing.T) {
 	os.Setenv("SERVER_ADDRESS", "localhost:9999")
 
-	client := api()
+	client := Api()
 
 	assert.Equal(t, "http://localhost:9999", client.BaseURL)
 }
@@ -24,7 +24,7 @@ func TestAPI_WithToken(t *testing.T) {
 
 	_ = os.WriteFile(tokenFile, []byte(`{"token": "test-token-123"}`), 0600)
 
-	client := api()
+	client := Api()
 
 	authHeader := client.Header.Get("Authorization")
 	assert.Equal(t, "Bearer test-token-123", authHeader)

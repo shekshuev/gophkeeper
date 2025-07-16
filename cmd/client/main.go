@@ -108,6 +108,7 @@ func mainMenu() bool {
 }
 
 func authMenu() bool {
+	rc := client.Api()
 	for {
 		fmt.Println(`[1] Зарегистрироваться
 [2] Войти
@@ -116,9 +117,9 @@ func authMenu() bool {
 
 		switch choice {
 		case "1":
-			client.Register()
+			client.Register(rc)
 		case "2":
-			client.Login()
+			client.Login(rc, client.SaveToken)
 			if isTokenValid() {
 				fmt.Println("Вход выполнен успешно.")
 				return true
