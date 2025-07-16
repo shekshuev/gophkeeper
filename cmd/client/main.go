@@ -70,9 +70,9 @@ func mainMenu() bool {
 		switch choice {
 		case "1":
 			title := prompt("Введите название секрета: ")
-			client.CreateSecret(title)
+			client.CreateSecret(title, client.Api())
 		case "2":
-			client.ListSecrets()
+			client.ListSecrets(client.Api(), client.GetUserIDFromToken)
 		case "3":
 			idStr := prompt("Введите ID секрета: ")
 			id, err := strconv.ParseUint(idStr, 10, 64)
@@ -80,7 +80,7 @@ func mainMenu() bool {
 				fmt.Println("Некорректный ID")
 				continue
 			}
-			client.GetSecret(id)
+			client.GetSecret(id, client.Api())
 		case "4":
 			idStr := prompt("Введите ID секрета для удаления: ")
 			id, err := strconv.ParseUint(idStr, 10, 64)
@@ -88,7 +88,7 @@ func mainMenu() bool {
 				fmt.Println("Некорректный ID")
 				continue
 			}
-			client.DeleteSecret(id)
+			client.DeleteSecret(id, client.Api())
 		case "5":
 			err := client.Logout()
 			if err != nil {
@@ -108,7 +108,6 @@ func mainMenu() bool {
 }
 
 func authMenu() bool {
-	rc := client.Api()
 	for {
 		fmt.Println(`[1] Зарегистрироваться
 [2] Войти
@@ -117,9 +116,9 @@ func authMenu() bool {
 
 		switch choice {
 		case "1":
-			client.Register(rc)
+			client.Register(client.Api())
 		case "2":
-			client.Login(rc, client.SaveToken)
+			client.Login(client.Api(), client.SaveToken)
 			if isTokenValid() {
 				fmt.Println("Вход выполнен успешно.")
 				return true

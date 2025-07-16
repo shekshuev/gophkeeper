@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/shekshuev/gophkeeper/internal/models"
 )
 
@@ -19,8 +20,7 @@ import (
 //
 // Пользователь пошагово вводит данные, после чего выполняется POST-запрос на /v1.0/secrets.
 // В случае успеха выводит HTTP-статус и тело ответа.
-func CreateSecret(title string) {
-	rc := Api()
+func CreateSecret(title string, rc *resty.Client) {
 
 	fmt.Println(`[1] Произвольный текст
 [2] Логин + пароль
@@ -77,13 +77,12 @@ func CreateSecret(title string) {
 		fmt.Println("Ошибка запроса:", err)
 		return
 	}
-	fmt.Println(resp.Status(), string(resp.Body()))
+	fmt.Println(resp.StatusCode(), string(resp.Body()))
 }
 
 // GetSecret — CLI-обёртка для получения одного секрета по ID.
 // Выполняет GET-запрос на /v1.0/secrets/{id} и выводит форматированный JSON с данными секрета.
-func GetSecret(id uint64) {
-	rc := Api()
+func GetSecret(id uint64, rc *resty.Client) {
 
 	var secret models.ReadSecretDTO
 	resp, err := rc.R().
@@ -94,7 +93,7 @@ func GetSecret(id uint64) {
 		return
 	}
 	if resp.IsError() {
-		fmt.Println(resp.Status(), string(resp.Body()))
+		fmt.Println(resp.StatusCode(), string(resp.Body()))
 		return
 	}
 
@@ -105,10 +104,9 @@ func GetSecret(id uint64) {
 // ListSecrets — CLI-обёртка для получения списка всех секретов пользователя.
 // Запрашивает user_id из токена и выполняет GET-запрос на /v1.0/secrets/user/{user_id}.
 // Выводит ID и название каждого секрета.
-func ListSecrets() {
-	rc := Api()
+func ListSecrets(rc *resty.Client, getUserID func() (string, error)) {
 
-	userID, err := GetUserIDFromToken()
+	userID, err := getUserID()
 	if err != nil {
 		fmt.Println("Ошибка авторизации:", err)
 		return
@@ -123,7 +121,7 @@ func ListSecrets() {
 		return
 	}
 	if resp.IsError() {
-		fmt.Println(resp.Status(), string(resp.Body()))
+		fmt.Println(resp.StatusCode(), string(resp.Body()))
 		return
 	}
 
@@ -134,8 +132,7 @@ func ListSecrets() {
 
 // DeleteSecret — CLI-обёртка для удаления секрета по ID.
 // Выполняет DELETE-запрос на /v1.0/secrets/{id} и выводит HTTP-статус.
-func DeleteSecret(id uint64) {
-	rc := Api()
+func DeleteSecret(id uint64, rc *resty.Client) {
 
 	resp, err := rc.R().
 		Delete(fmt.Sprintf("/v1.0/secrets/%d", id))
@@ -143,7 +140,7 @@ func DeleteSecret(id uint64) {
 		fmt.Println("Ошибка:", err)
 		return
 	}
-	fmt.Println(resp.Status())
+	fmt.Println(resp.StatusCode())
 }
 
 // promptInput — вспомогательная функция для ввода строки с консоли.
