@@ -31,56 +31,45 @@ func TestHandler_GetSecretByID(t *testing.T) {
 
 	accessToken, _ := utils.CreateToken(cfg.AccessTokenSecret, "1", cfg.AccessTokenExpires)
 
-	testCases := []struct {
-		name          string
-		secretID      string
-		expectedCode  int
-		responseDTO   *models.ReadSecretDTO
-		serviceError  error
-		serviceCalled bool
-	}{
-		{
-			name:         "Success",
-			secretID:     "1",
-			expectedCode: http.StatusOK,
-			responseDTO: &models.ReadSecretDTO{
+	t.Run("Success", func(t *testing.T) {
+		secrets.EXPECT().
+			GetByID(gomock.Any(), gomock.Any()).
+			Return(&models.ReadSecretDTO{
 				ID:     1,
 				UserID: 1,
 				Title:  "My secret",
-			},
-			serviceCalled: true,
-		},
-		{
-			name:          "Invalid ID",
-			secretID:      "abc",
-			expectedCode:  http.StatusNotFound,
-			serviceCalled: false,
-		},
-		{
-			name:          "Secret not found",
-			secretID:      "2",
-			expectedCode:  http.StatusNotFound,
-			serviceError:  assert.AnError,
-			serviceCalled: true,
-		},
-	}
+			}, nil)
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			if tc.serviceCalled {
-				secrets.EXPECT().
-					GetByID(gomock.Any(), gomock.Any()).
-					Return(tc.responseDTO, tc.serviceError)
-			}
+		resp, err := resty.New().R().
+			SetHeader("Authorization", "Bearer "+accessToken).
+			Get(server.URL + "/v1.0/secrets/1")
 
-			resp, err := resty.New().R().
-				SetHeader("Authorization", "Bearer "+accessToken).
-				Get(server.URL + "/v1.0/secrets/" + tc.secretID)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode())
+	})
 
-			assert.NoError(t, err)
-			assert.Equal(t, tc.expectedCode, resp.StatusCode())
-		})
-	}
+	t.Run("Invalid_ID", func(t *testing.T) {
+		resp, err := resty.New().R().
+			SetHeader("Authorization", "Bearer "+accessToken).
+			Get(server.URL + "/v1.0/secrets/abc")
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode())
+	})
+
+	t.Run("Secret_not_found", func(t *testing.T) {
+		secrets.EXPECT().
+			GetByID(gomock.Any(), gomock.Any()).
+			Return(nil, assert.AnError)
+
+		resp, err := resty.New().R().
+			SetHeader("Authorization", "Bearer "+accessToken).
+			Get(server.URL + "/v1.0/secrets/2")
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode())
+	})
+
 }
 
 func TestHandler_CreateSecret(t *testing.T) {
@@ -98,57 +87,57 @@ func TestHandler_CreateSecret(t *testing.T) {
 
 	accessTokenForUser1, _ := utils.CreateToken(cfg.AccessTokenSecret, "1", cfg.AccessTokenExpires)
 
-	testCases := []struct {
-		name          string
-		accessToken   string
-		payload       models.CreateSecretDTO
-		expectedCode  int
-		serviceCalled bool
-	}{
-		{
-			name:        "Success (same user ID)",
-			accessToken: accessTokenForUser1,
-			payload: models.CreateSecretDTO{
-				UserID: 1,
-				Title:  "Secret A",
-				Data:   models.SecretDataDTO{Text: ptr("top secret")},
-			},
-			expectedCode:  http.StatusCreated,
-			serviceCalled: true,
-		},
-		{
-			name:        "Unauthorized (no token)",
-			accessToken: "",
-			payload: models.CreateSecretDTO{
-				UserID: 1,
-				Title:  "Secret B",
-				Data:   models.SecretDataDTO{Text: ptr("hacked")},
-			},
-			expectedCode:  http.StatusUnauthorized,
-			serviceCalled: false,
-		},
-	}
+	t.Run("Success_same_user_ID", func(t *testing.T) {
+		dto := models.CreateSecretDTO{
+			UserID: 1,
+			Title:  "Secret A",
+			Data:   models.SecretDataDTO{Text: ptr("top secret")},
+		}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			if tc.serviceCalled {
-				secrets.EXPECT().
-					Create(gomock.Any(), tc.payload).
-					Return(uint64(42), nil)
-			}
+		secrets.EXPECT().
+			Create(gomock.Any(), dto).
+			Return(uint64(42), nil)
 
-			body, _ := json.Marshal(tc.payload)
+		body, _ := json.Marshal(dto)
 
-			resp, err := resty.New().R().
-				SetHeader("Authorization", "Bearer "+tc.accessToken).
-				SetHeader("Content-Type", "application/json").
-				SetBody(bytes.NewReader(body)).
-				Post(server.URL + "/v1.0/secrets/")
+		resp, err := resty.New().R().
+			SetHeader("Authorization", "Bearer "+accessTokenForUser1).
+			SetHeader("Content-Type", "application/json").
+			SetBody(bytes.NewReader(body)).
+			Post(server.URL + "/v1.0/secrets/")
 
-			assert.NoError(t, err)
-			assert.Equal(t, tc.expectedCode, resp.StatusCode())
-		})
-	}
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusCreated, resp.StatusCode())
+	})
+
+	t.Run("Unauthorized_no_token", func(t *testing.T) {
+		dto := models.CreateSecretDTO{
+			UserID: 1,
+			Title:  "Secret B",
+			Data:   models.SecretDataDTO{Text: ptr("hacked")},
+		}
+
+		body, _ := json.Marshal(dto)
+
+		resp, err := resty.New().R().
+			SetHeader("Content-Type", "application/json").
+			SetBody(bytes.NewReader(body)).
+			Post(server.URL + "/v1.0/secrets/")
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode())
+	})
+
+	t.Run("Invalid_JSON", func(t *testing.T) {
+		resp, err := resty.New().R().
+			SetHeader("Authorization", "Bearer "+accessTokenForUser1).
+			SetHeader("Content-Type", "application/json").
+			SetBody(`{invalid json`).
+			Post(server.URL + "/v1.0/secrets/")
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode())
+	})
 }
 
 func TestHandler_GetAllSecretsByUserID(t *testing.T) {
@@ -167,59 +156,47 @@ func TestHandler_GetAllSecretsByUserID(t *testing.T) {
 	accessTokenUser10, _ := utils.CreateToken(cfg.AccessTokenSecret, "10", cfg.AccessTokenExpires)
 	accessTokenUser11, _ := utils.CreateToken(cfg.AccessTokenSecret, "11", cfg.AccessTokenExpires)
 
-	testCases := []struct {
-		name          string
-		requestUserID string
-		accessToken   string
-		expectedCode  int
-		serviceCalled bool
-	}{
-		{
-			name:          "Success (same user ID)",
-			requestUserID: "10",
-			accessToken:   accessTokenUser10,
-			expectedCode:  http.StatusOK,
-			serviceCalled: true,
-		},
-		{
-			name:          "Unauthorized (no token)",
-			requestUserID: "10",
-			accessToken:   "",
-			expectedCode:  http.StatusUnauthorized,
-			serviceCalled: false,
-		},
-		{
-			name:          "Forbidden (token subject ≠ user_id)",
-			requestUserID: "10",
-			accessToken:   accessTokenUser11,
-			expectedCode:  http.StatusUnauthorized,
-			serviceCalled: false,
-		},
-	}
+	t.Run("Success_same_user_ID", func(t *testing.T) {
+		secrets.EXPECT().
+			GetAllByUser(gomock.Any(), uint64(10)).
+			Return([]models.ReadSecretDTO{
+				{ID: 1, UserID: 10, Title: "First"},
+				{ID: 2, UserID: 10, Title: "Second"},
+			}, nil)
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			if tc.serviceCalled {
-				secrets.EXPECT().
-					GetAllByUser(gomock.Any(), uint64(10)).
-					Return([]models.ReadSecretDTO{
-						{ID: 1, UserID: 10, Title: "First"},
-						{ID: 2, UserID: 10, Title: "Second"},
-					}, nil)
-			}
+		resp, err := resty.New().R().
+			SetHeader("Authorization", "Bearer "+accessTokenUser10).
+			Get(server.URL + "/v1.0/secrets/user/10")
 
-			req := resty.New().R()
-			if tc.accessToken != "" {
-				req.SetHeader("Authorization", "Bearer "+tc.accessToken)
-			}
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode())
+	})
 
-			resp, err := req.
-				Get(server.URL + "/v1.0/secrets/user/" + tc.requestUserID)
+	t.Run("Unauthorized_no_token", func(t *testing.T) {
+		resp, err := resty.New().R().
+			Get(server.URL + "/v1.0/secrets/user/10")
 
-			assert.NoError(t, err)
-			assert.Equal(t, tc.expectedCode, resp.StatusCode())
-		})
-	}
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode())
+	})
+
+	t.Run("Forbidden_token_subject_not_equal_user_id", func(t *testing.T) {
+		resp, err := resty.New().R().
+			SetHeader("Authorization", "Bearer "+accessTokenUser11).
+			Get(server.URL + "/v1.0/secrets/user/10")
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode())
+	})
+
+	t.Run("Invalid_user_id_format", func(t *testing.T) {
+		resp, err := resty.New().R().
+			SetHeader("Authorization", "Bearer "+accessTokenUser10).
+			Get(server.URL + "/v1.0/secrets/user/abc")
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode())
+	})
 }
 
 func TestHandler_DeleteSecretByID(t *testing.T) {
