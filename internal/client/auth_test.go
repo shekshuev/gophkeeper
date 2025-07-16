@@ -24,7 +24,9 @@ func TestRegister_Success(t *testing.T) {
 	Register(client)
 
 	w.Close()
-	out.ReadFrom(r)
+	if _, err := out.ReadFrom(r); err != nil {
+		t.Fatalf("failed to read output: %v", err)
+	}
 	os.Stdout = stdout
 
 	assert.Contains(t, out.String(), "Успешно зарегистрирован.")
@@ -43,7 +45,9 @@ func TestRegister_Fail(t *testing.T) {
 	Register(client)
 
 	w.Close()
-	out.ReadFrom(r)
+	if _, err := out.ReadFrom(r); err != nil {
+		t.Fatalf("failed to read output: %v", err)
+	}
 	os.Stdout = stdout
 
 	assert.Contains(t, out.String(), "Ошибка:")
@@ -66,7 +70,9 @@ func TestRegister_HttpError(t *testing.T) {
 	Register(client)
 
 	w.Close()
-	out.ReadFrom(r)
+	if _, err := out.ReadFrom(r); err != nil {
+		t.Fatalf("failed to read output: %v", err)
+	}
 	os.Stdout = stdout
 
 	assert.Contains(t, out.String(), "Ошибка:")
@@ -96,7 +102,9 @@ func TestLogin_Success(t *testing.T) {
 	})
 
 	w.Close()
-	out.ReadFrom(r)
+	if _, err := out.ReadFrom(r); err != nil {
+		t.Fatalf("failed to read output: %v", err)
+	}
 	os.Stdout = stdout
 
 	assert.Contains(t, out.String(), "Вход выполнен.")
@@ -117,7 +125,9 @@ func TestLogin_Invalid(t *testing.T) {
 	})
 
 	w.Close()
-	out.ReadFrom(r)
+	if _, err := out.ReadFrom(r); err != nil {
+		t.Fatalf("failed to read output: %v", err)
+	}
 	os.Stdout = stdout
 
 	assert.Contains(t, out.String(), "Ошибка:")
@@ -140,7 +150,9 @@ func TestLogin_UnmarshalError(t *testing.T) {
 	Login(client, func(token string) error { return nil })
 
 	w.Close()
-	out.ReadFrom(r)
+	if _, err := out.ReadFrom(r); err != nil {
+		t.Fatalf("failed to read output: %v", err)
+	}
 	os.Stdout = stdout
 
 	assert.Contains(t, out.String(), "Ошибка разбора ответа")
@@ -160,7 +172,9 @@ func TestLogin_RequestError(t *testing.T) {
 	Login(client, func(token string) error { return nil })
 
 	w.Close()
-	out.ReadFrom(r)
+	if _, err := out.ReadFrom(r); err != nil {
+		t.Fatalf("failed to read output: %v", err)
+	}
 	os.Stdout = stdout
 
 	assert.Contains(t, out.String(), "error:")

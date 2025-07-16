@@ -17,7 +17,9 @@ func MockInput(inputs ...string) func() {
 	os.Stdin = r
 	go func() {
 		for _, input := range inputs {
-			w.WriteString(input + "\n")
+			if _, err := w.WriteString(input + "\n"); err != nil {
+				fmt.Fprintf(os.Stderr, "failed to write mock input: %v\n", err)
+			}
 		}
 		w.Close()
 	}()
@@ -65,7 +67,9 @@ func CaptureOutput(f func()) string {
 	f()
 
 	w.Close()
-	buf.ReadFrom(r)
+	if _, err := buf.ReadFrom(r); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to read captured output: %v\n", err)
+	}
 	os.Stdout = stdout
 	return buf.String()
 }

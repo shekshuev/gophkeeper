@@ -15,6 +15,7 @@ import (
 	"github.com/shekshuev/gophkeeper/internal/middleware"
 	"github.com/shekshuev/gophkeeper/internal/service"
 	"github.com/shekshuev/gophkeeper/internal/utils"
+	"go.uber.org/zap"
 )
 
 // Handler — основной HTTP-обработчик приложения.
@@ -85,7 +86,9 @@ func NewHandler(
 	})
 
 	h.Router.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
-		w.Write([]byte("ok"))
+		if _, err := w.Write([]byte("ok")); err != nil {
+			h.logger.Log.Error("failed to write health response", zap.Error(err))
+		}
 	})
 
 	return h

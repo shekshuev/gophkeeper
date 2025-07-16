@@ -24,7 +24,9 @@ func Test_printBuildInfo(t *testing.T) {
 
 	w.Close()
 	os.Stdout = old
-	buf.ReadFrom(r)
+	if _, err := buf.ReadFrom(r); err != nil {
+		t.Fatalf("failed to read from pipe: %v", err)
+	}
 
 	output := buf.String()
 	if !strings.Contains(output, "Build version") ||

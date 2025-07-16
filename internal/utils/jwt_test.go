@@ -75,7 +75,7 @@ func TestGetRawAccessToken(t *testing.T) {
 	assert.Empty(t, token)
 
 	req.Header.Set("Authorization", "Token somevalue")
-	token, err = GetRawAccessToken(req)
+	_, err = GetRawAccessToken(req)
 	assert.ErrorIs(t, err, ErrTokenInvalid)
 
 	req.Header.Set("Authorization", "Bearer sometoken")
