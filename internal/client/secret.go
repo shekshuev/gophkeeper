@@ -12,14 +12,16 @@ import (
 )
 
 // CreateSecret — CLI-обёртка для создания нового секрета.
+//
 // Поддерживает типы:
 //
 //	[1] Произвольный текст
 //	[2] Логин + пароль
 //	[3] Банковская карта
+//	[4] Бинарные данные (в hex или base64, пока не поддержано)
 //
-// Пользователь пошагово вводит данные, после чего выполняется POST-запрос на /v1.0/secrets.
-// В случае успеха выводит HTTP-статус и тело ответа.
+// Пользователь пошагово вводит данные через консоль, затем выполняется POST-запрос на /v1.0/secrets.
+// В случае успеха выводится HTTP-статус и тело ответа.
 func CreateSecret(title string, rc *resty.Client) {
 
 	fmt.Println(`[1] Произвольный текст
@@ -81,7 +83,10 @@ func CreateSecret(title string, rc *resty.Client) {
 }
 
 // GetSecret — CLI-обёртка для получения одного секрета по ID.
-// Выполняет GET-запрос на /v1.0/secrets/{id} и выводит форматированный JSON с данными секрета.
+//
+// Выполняет GET-запрос на /v1.0/secrets/{id}.
+// В случае успеха выводит отформатированный JSON с данными секрета.
+// В случае ошибки выводит статус и тело ответа.
 func GetSecret(id uint64, rc *resty.Client) {
 
 	var secret models.ReadSecretDTO
@@ -101,9 +106,11 @@ func GetSecret(id uint64, rc *resty.Client) {
 	fmt.Println(string(j))
 }
 
-// ListSecrets — CLI-обёртка для получения списка всех секретов пользователя.
-// Запрашивает user_id из токена и выполняет GET-запрос на /v1.0/secrets/user/{user_id}.
-// Выводит ID и название каждого секрета.
+// ListSecrets — CLI-обёртка для получения всех секретов пользователя.
+//
+// Получает user_id с помощью функции getUserID (обычно из access-токена).
+// Затем выполняет GET-запрос на /v1.0/secrets/user/{user_id}.
+// В случае успеха выводит ID и название каждого секрета построчно.
 func ListSecrets(rc *resty.Client, getUserID func() (string, error)) {
 
 	userID, err := getUserID()
@@ -131,7 +138,9 @@ func ListSecrets(rc *resty.Client, getUserID func() (string, error)) {
 }
 
 // DeleteSecret — CLI-обёртка для удаления секрета по ID.
-// Выполняет DELETE-запрос на /v1.0/secrets/{id} и выводит HTTP-статус.
+//
+// Выполняет DELETE-запрос на /v1.0/secrets/{id}.
+// В случае успеха выводит HTTP-статус. В случае ошибки — сообщение об ошибке.
 func DeleteSecret(id uint64, rc *resty.Client) {
 
 	resp, err := rc.R().
@@ -143,8 +152,10 @@ func DeleteSecret(id uint64, rc *resty.Client) {
 	fmt.Println(resp.StatusCode())
 }
 
-// promptInput — вспомогательная функция для ввода строки с консоли.
-// Выводит метку и возвращает trimmed-значение.
+// promptInput — вспомогательная функция для запроса строки от пользователя через консоль.
+//
+// Выводит переданную метку и считывает строку ввода.
+// Возвращает trimmed-значение строки.
 func promptInput(label string) string {
 	fmt.Print(label)
 	scanner := bufio.NewScanner(os.Stdin)
