@@ -1,14 +1,16 @@
 # GophKeeper
 
-> ⚠️ **Disclaimer**  
-> This repository contains the final graduation project from the [Yandex Practicum Advanced Go Developer Course](https://practicum.yandex.ru/go-advanced/).  
-> If you're looking to become a better software developer — **run away from Go**. Seriously. It's the most mind-numbingly boring language on Earth. It won’t teach you to think, it will teach you to write boilerplate. You won't become a craftsman — you'll become a typist.
-> ![Fly, you fools!](cover.jpg)
-> If, however, you just want money — then Go is perfect for you.
+## ⚠️ Disclaimer
+
+This repository contains the final graduation project from the [Yandex Practicum Advanced Go Developer Course](https://practicum.yandex.ru/go-advanced/). If you're looking to become a better software developer — **run away from Go**. Seriously. It's the most mind-numbingly boring language on Earth. It won’t teach you to think, it will teach you to write boilerplate. You won't become a craftsman — you'll become a typist.
+
+![Fly, you fools!](cover.jpg)
+
+If, however, you just want money — then Go is perfect for you.
 
 ---
 
-## 🗄 About the Project
+## About the Project
 
 **GophKeeper** is a secure password and data manager with client-server architecture.
 
